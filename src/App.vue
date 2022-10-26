@@ -6,108 +6,179 @@
     </div>
     <!--query-->
     <div class="query-box">
-      <el-input v-model="queryInput" placeholder="请输入姓名搜索🔍"></el-input>
-      <el-button type="primary">增加</el-button>
+      <el-input class="query-input" v-model="queryInput" placeholder="请输入姓名搜索🔍"></el-input>
+     <div class="btn-list">
+       <el-button type="danger" @click="handleDelList" v-if="multipleSelection.length > 0">删除多选</el-button>
+       <el-button type="primary" @click="handleAdd">增加</el-button>
+     </div>
     </div>
     <!--table-->
     <el-table
-              ref="multipleTableRef"
-              :data="tableData"
-              style="width: 100%"
-              @selection-change="handleSelectionChange" border>
-      <el-table-column type="selection" width="55" />
-      <el-table-column fixed prop="date" label="Date" width="150" />
-      <el-table-column prop="name" label="Name" width="120" />
-      <el-table-column prop="state" label="State" width="120" />
-      <el-table-column prop="city" label="City" width="120" />
-      <el-table-column prop="address" label="Address" width="600" />
-      <el-table-column prop="zip" label="Zip" width="120" />
-      <el-table-column fixed="right" label="Operations" width="120">
-        <template #default>
-          <el-button link type="primary" size="small" @click="handleRowClick"
-          >Detail</el-button
-          >
-          <el-button link type="primary" size="small">Edit</el-button>
+        ref="multipleTableRef"
+        :data="tableData"
+        style="width: 100%"
+        @selection-change="handleSelectionChange" border>
+      <el-table-column type="selection" width="55"/>
+      <el-table-column prop="name" label="姓名" width="80"/>
+      <el-table-column prop="email" label="邮箱" width="195"/>
+      <el-table-column prop="phone" label="电话" width="160"/>
+      <el-table-column prop="state" label="状态" width="80"/>
+      <el-table-column prop="address" label="地址" width="280"/>
+      <el-table-column fixed="right" label="操作" width="150">
+        <template #default="scope">
+          <el-button type="danger" size="small" @click="handleRowDel(scope.row)">删除</el-button>
+          <el-button type="primary" size="small">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
+    <!--dialog-->
+    <el-dialog v-model="dialogFormVisible" :title="dialogType === 'add'? '新增' : '编辑'" width="30%">
+      <el-form :model="tableForm">
+        <el-form-item label="姓名：" :label-width="80">
+          <el-input v-model="tableForm.name" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item label="邮箱：" :label-width="80">
+          <el-input v-model="tableForm.email" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item label="电话：" :label-width="80">
+          <el-input v-model="tableForm.phone" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item label="状态：" :label-width="80">
+          <el-input v-model="tableForm.state" autocomplete="off"/>
+        </el-form-item>
+        <el-form-item label="地址：" :label-width="80">
+          <el-input v-model="tableForm.address" autocomplete="off"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+      <span class="dialog-footer">
+        <el-button type="primary" @click="dialogConfirm">
+          确认
+        </el-button>
+      </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import {ref} from "vue";
+import {reactive, ref} from "vue";
 
 //数据
 let queryInput = ref("")
 let tableData = ref([
   {
-    date: '2016-05-03',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
+    id: '1',
+    name: 'Tom1',
+    email: '123456789@qq.com',
+    phone: '987654321',
+    state: '在职',
     address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Home',
   },
   {
-    date: '2016-05-02',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
+    id: '2',
+    name: 'Tom2',
+    email: '123456789@qq.com',
+    phone: '987654321',
+    state: '在职',
     address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Office',
   },
   {
-    date: '2016-05-04',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
+    id: '3',
+    name: 'Tom3',
+    email: '123456789@qq.com',
+    phone: '987654321',
+    state: '在职',
     address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Home',
   },
   {
-    date: '2016-05-01',
-    name: 'Tom',
-    state: 'California',
-    city: 'Los Angeles',
+    id: '4',
+    name: 'Tom4',
+    email: '123456789@qq.com',
+    phone: '987654321',
+    state: '在职',
     address: 'No. 189, Grove St, Los Angeles',
-    zip: 'CA 90036',
-    tag: 'Office',
+  },
+  {
+    id: '5',
+    name: 'Tom5',
+    email: '123456789@qq.com',
+    phone: '987654321',
+    state: '在职',
+    address: 'No. 189, Grove St, Los Angeles',
   },
 ])
 let multipleSelection = ref([])
+let dialogFormVisible = ref(false)
+let tableForm = reactive([{
+  name: '张三',
+  email: '123@qq.com',
+  phone: '123456789',
+  state: '在职',
+  address: '梧州市'
+}])
+let dialogType = ref('add')
 
 //方法
-const handleRowClick = () => {
-  console.log('click')
+const handleRowDel = ({id}) => {
+  // console.log(id)
+  //通过 id 找到相应的数据
+  let index = tableData.value.findIndex(item => item.id === id)
+  //删除
+  tableData.value.splice(index, 1)
 }
+const handleDelList = () => {
+  multipleSelection.value.forEach(id => {
+    handleRowDel({id})
+  })
+  multipleSelection.value = []
+}
+//选择框
 const handleSelectionChange = (val) => {
-  multipleSelection.value = val
-  console.log(val)
+  // multipleSelection.value = val
+  multipleSelection.value = []
+  val.forEach(item => {
+    multipleSelection.value.push(item.id)
+  })
 }
+//添加数据的模态框
+const handleAdd = () => {
+  dialogFormVisible.value = true
+  tableForm.value = {}
+}
+//保存并添加模态框的数据
+const dialogConfirm = () => {
+  dialogFormVisible.value = false
+  //拿到数据
+  //添加到 table
+  tableData.value.push({
+    id: (tableData.value.length + 1).toString(),
+    ...tableForm
+  })
+  console.log(tableData)
+}
+//
 
 </script>
 
 <style scoped>
 
-.table-box{
-  width: 800px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.table-box {
+  width: 1000px;
+  margin: 150px auto;
 }
-.title{
+
+.title {
   text-align: center;
 }
-.query-box{
+
+.query-box {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
 }
-.el-input{
+
+.query-input {
   width: 200px;
 }
 </style>
